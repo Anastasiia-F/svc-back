@@ -18,7 +18,7 @@ const cors              = require('cors');
 /**
  * Load environment variables from .env file.
  */
-dotenv.load({ path: '.env.dev' });
+dotenv.load({ path: '.env' });
 
 
 /**
@@ -65,6 +65,7 @@ app.use(session({
   resave: true,
   saveUninitialized: true,
   secret: process.env.SESSION_SECRET,
+  secret: 'secret',
   cookie: { maxAge: 24 * 60 * 60 * 1000 }, // 24 hrs
   unset: 'destroy',
   store: new MongoStore({
@@ -96,10 +97,14 @@ if (process.env.NODE_ENV === 'development') {
   });
 }
 
+app.get('/', function(request, response) {
+  response.send('Hello SVC!!')
+});
+
 
 /**
  * Start Express server.
  */
 app.listen(port, () => {
-  debug(`App running at port ${yellow(port)}`);
+  console.log(`App running at port ${yellow(port)}`);
 });
