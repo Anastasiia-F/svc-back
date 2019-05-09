@@ -26,7 +26,7 @@ dotenv.load({ path: '.env' });
  */
 const app = express();
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 
 
 /**
@@ -104,6 +104,9 @@ app.get('/', function(request, response) {
 /**
  * Start Express server.
  */
-app.listen(port, () => {
+app.listen(port, (error) => {
   console.log(`App running at port ${yellow(port)}`);
+  if(error){
+    console.log(error)
+  }
 });

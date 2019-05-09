@@ -101,7 +101,7 @@ exports.postSignup = (req, res, next) => {
       });
   };
 
-  User.findOne({ email: req.body.email }, (err, existingUser) => {
+  const createNewUser =  (err, existingUser) => {
     if (err) { return next(err); }
     if (existingUser) {
       return res.status(400).json({ msg: 'Email already registered' });
@@ -131,9 +131,10 @@ exports.postSignup = (req, res, next) => {
       let hasReport;
       let reportId;
 
-      // Use credit to generate report.
-      if (credit.generateReport && credit.creditType && credit.registration) {
+    // Use credit to generate report.
+      if (credit.creditType && credit.registration) {
         const report = await SVC.generateReport(credit.creditType, credit.registration);
+
         if (report instanceof Error) throw report;
 
         user.reports.push(report);
@@ -152,19 +153,26 @@ exports.postSignup = (req, res, next) => {
       if (i === credits.length - 1) {
         user.save((err) => {
           if (err) { return next(err); }
+
           req.logIn(user, (err) => {
             if (err) { return next(err); }
-            sendConfirmationEmail(user, {
-              msg: 'Signup successful',
-              credits: user.credits,
-              reports: user.reports
-            });
+
+            sendConfirmationEmail(
+             user, {
+               msg: 'Signup successful',
+               credits: user.credits,
+               reports: user.reports
+              });
           });
+
         });
       }
-    })
-      .catch(err => res.status(500).json({ msg: err.message }));
-  });
+		})
+		.catch(err => res.status(500).json({ msg: err.message }));
+};
+
+	User.findOne({ email: req.body.email }, createNewUser);
+
 };
 
 
@@ -459,6 +467,7 @@ exports.postResetToken = (req, res, next) => {
  * Delete user account.
  */
 exports.deleteAccount = (req, res, next) => {
+
   User.deleteOne({ email: req.user }, (err) => {
     if (err) { return next(err); }
     req.logout();
