@@ -43,7 +43,6 @@ exports.getSignup = (req, res) => {
  */
 exports.postSignup = (req, res, next) => {
   req.assert('name', 'Name cannot be empty').notEmpty();
-  req.assert('phone', 'Phone is not valid').isMobilePhone();
   req.assert('creditCard', 'Credit Card Number is not valid').isCreditCard();
   req.assert('email', 'Email is not valid').isEmail();
   req.sanitize('email').normalizeEmail({ gmail_remove_dots: false });
@@ -118,7 +117,6 @@ exports.postSignup = (req, res, next) => {
 
     const user = new User({
       name: req.body.name,
-      phone: req.body.phone,
       creditCard: req.body.creditCard,
       email: req.body.email,
       credits: [],

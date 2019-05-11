@@ -114,7 +114,7 @@ exports.generateReport = (reportType, registration) => {
    requestIMGData;
 
   if(reportType === 'Full') {
-   requestData = requestOptions(process.env.UKVD_API_URL_VdiCheckFull, registration);
+    requestData = requestOptions(process.env.UKVD_API_URL_VdiCheckFull, registration);
   }
 
  requestIMGData = requestOptions(process.env.UKVD_API_URL_VehicleImageData, registration);
