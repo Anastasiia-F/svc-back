@@ -61,105 +61,71 @@ exports.getVdiFullCheck = (req, res, next) => {
 
 
 /**
- * GET /:datapackage/:registration
- * Get data by package param and VRM.
- */
-exports.getDataByPackage = (req, res, next) => {
-  req.params.datapackage = req.params.datapackage.toLowerCase();
-
-  req.assert('datapackage', 'Data Package is not valid').isIn(dataPackages);
-  req.assert('registration', 'Registration is not valid').isAlphanumeric();
-
-  const errors = req.validationErrors();
-
-  if (errors) {
-    return res.status(400).json({ msg: errors[0].msg });
-  }
-
-  requestOptions.qs.key_VRM(req.params.registration);
-  requestOptions.uri = `${process.env.UKVD_API_URL_datapackage}/${req.params.datapackage}`;
-
-  request(requestOptions)
-    .then((result) => {
-      const {
-        StatusMessage,
-        StatusCode,
-        DataItems
-      } = result.body.Response;
-
-      debug(`${blue('UKVD:')} ${req.params.datapackage} ${StatusMessage}`);
-      if (StatusCode !== 'Success') throw new Error(StatusCode);
-
-      return { msg: StatusCode, data: DataItems };
-    })
-    .then(result => res.status(200).json(result))
-    .catch(err => res.status(500).json({ msg: err.message, data: {} }));
-};
-
-
-/**
  * GET /fail
  * Mock UKVD fail response.
  */
 exports.getDataFail = (req, res, next) => res.status(500).json({ msg: 'ServiceUnavailable', data: {} });
 
 
+function requestTimeoutPromise(requestData, packageName, interval) {
+
+    return new Promise((resolve, reject)=> {
+
+        setTimeout(()=> {
+            request(requestData)
+                .then(result => {
+                    let obj = {};
+                    obj[packageName] = result.body.Response.DataItems;
+
+                    resolve(obj);
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        }, interval * 500);
+
+    });
+}
+
 /**
  * VdiFullCheck by VRM
  * return report
  */
-exports.generateReport = (reportType, registration) => {
-  let data = {},
-   requestData,
-   requestIMGData;
+exports.generateNewReport = (reportType, registration) => {
+  let promises = [],
+      requestURL = process.env.UKVD_API_URL_datapackage;
 
   if(reportType === 'Full') {
-    requestData = requestOptions(process.env.UKVD_API_URL_VdiCheckFull, registration);
+
+      dataPackages.forEach((packageName, index) => {
+
+          let data = requestOptions(requestURL+packageName, registration);
+
+          promises.push(
+              requestTimeoutPromise(data, packageName, index)
+          );
+
+      });
+
+      return Promise.all(promises)
+            .then((result) => {
+                let reportData = {};
+
+                result.forEach(item => {
+                    for(let key in item) {
+                        reportData[key] = item[key];
+                    }
+                });
+
+                return new Report({
+                    reportType,
+                    registration,
+                    data: reportData,
+                });
+            })
+            .catch(error => error);
   }
 
- requestIMGData = requestOptions(process.env.UKVD_API_URL_VehicleImageData, registration);
-
-  return request(requestData)
-    .then((result) => {
-      let {
-        StatusMessage,
-        StatusCode,
-        DataItems
-      } = result.body.Response;
-
-      data = DataItems;
-
-      // debug(`${blue('requestOptions:')} ${JSON.stringify(requestOptions)}`);
-      // debug(`${blue('UKVD:')} ${StatusMessage}`);
-      if (StatusCode !== 'Success') throw new Error(StatusCode);
-
-     return request(requestIMGData);
-
-      // debug(`${green('Report:')} ${JSON.stringify(report)}`);
-    })
-   .then((result) => {
-    const {
-     StatusMessage,
-     StatusCode,
-     DataItems
-    } = result.body.Response;
-
-    debug(`${blue('UKVD:')} ${StatusMessage}`);
-    if (StatusCode !== 'Success') throw new Error(StatusCode);
-
-    return  DataItems;
-   })
-    .then(result => {
-      let img = result.VehicleImages.ImageDetailsList[0].ImageUrl;
-
-      return new Report({
-        reportType,
-        registration,
-        img: img,
-        data: data,
-       });
-    })
-    .catch(err => err);
 };
 
 

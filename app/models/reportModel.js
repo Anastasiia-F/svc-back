@@ -10,10 +10,10 @@ const schema = new mongoose.Schema({
     type: String,
     required: true
   },
-  img: {
-    type: String
-  },
-  data: Object
+  data: {
+    type: Object,
+    required: true
+  }
 
 }, { timestamps: true });
 

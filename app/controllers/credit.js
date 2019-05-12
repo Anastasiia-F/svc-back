@@ -13,7 +13,7 @@ const Credit            = require('../models/creditModel');
  * @param {Object} credit       credit being used
  * @param {String} registration VRM
  */
-const createReport = (user, credit, registration) => SVC.generateReport(credit.creditType, registration)
+const createReport = (user, credit, registration) => SVC.generateNewReport(credit.creditType, registration)
   .then(report => new Promise((resolve, reject) => {
     if (report instanceof Error) return reject(report);
 
@@ -84,8 +84,8 @@ exports.postCredits = (req, res, next) => {
       let reportId;
 
       // Use credit to generate report.
-      if (credit.generateReport && credit.creditType && credit.registration) {
-        const report = await SVC.generateReport(credit.creditType, credit.registration);
+      if (credit.generateNewReport && credit.creditType && credit.registration) {
+        const report = await SVC.generateNewReport(credit.creditType, credit.registration);
         if (report instanceof Error) throw report;
 
         user.reports.push(report);

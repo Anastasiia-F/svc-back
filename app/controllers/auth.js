@@ -131,7 +131,7 @@ exports.postSignup = (req, res, next) => {
 
     // Use credit to generate report.
       if (credit.creditType && credit.registration) {
-        const report = await SVC.generateReport(credit.creditType, credit.registration);
+        const report = await SVC.generateNewReport(credit.creditType, credit.registration);
 
         if (report instanceof Error) throw report;
 

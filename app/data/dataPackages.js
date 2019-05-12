@@ -10,7 +10,6 @@ module.exports = [
   'VdiCheckFull',
   'VehicleAndMotHistory',
   'VehicleData',
-  'VehicleDataIRL',
   'VehicleImageData',
   'VehicleTaxData'
-].toString().toLowerCase();
+];
