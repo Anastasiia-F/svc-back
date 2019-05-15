@@ -7,6 +7,8 @@ const Report          = require('../models/reportModel');
 
 const { dataPackages } = require('../data');
 
+const { basicCheckItems } = require('../data');
+
 
 const requestOptions = (uri, vrm) => {
  return {
@@ -95,6 +97,7 @@ exports.generateNewReport = (reportType, registration) => {
   let promises = [],
       requestURL = process.env.UKVD_API_URL_datapackage;
 
+
   if(reportType === 'Full') {
 
       dataPackages.forEach((packageName, index) => {
@@ -125,7 +128,37 @@ exports.generateNewReport = (reportType, registration) => {
             })
             .catch(error => error);
   }
+  else {
+      let requestData = requestOptions(process.env.UKVD_API_URL_VdiCheckFull, registration);
 
+      return request(requestData)
+          .then(result => {
+              return result.body.Response.DataItems;
+          })
+          .then((result)=> {
+                let reportData =  baseCheckController(result);
+                return new Report({
+                  reportType,
+                  registration,
+                  data: reportData,
+              });
+          })
+          .catch(error => error);
+  }
+};
+
+const baseCheckController = (data) => {
+    let baseCheck = {basic: {}};
+    let index;
+
+    for(let key in data) {
+        index = basicCheckItems.findIndex(item => item === key);
+        if (index >= 0) {
+            baseCheck.basic[key] = data[key];
+        }
+    }
+
+    return baseCheck;
 };
 
 
